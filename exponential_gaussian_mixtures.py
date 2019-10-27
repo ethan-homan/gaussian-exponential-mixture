@@ -4,11 +4,11 @@ import numpy
 
 
 class Parameters(object):
-    def __init__(self, beta=1.0, mu=0.0, sigma=100.0, proportion=0.5):
-        self.beta: float = beta
-        self.mu: float = mu
-        self.sigma: float = sigma
-        self.proportion: float = proportion
+    def __init__(self, beta=1.0, mu=0.0, sigma=100.0, proportion=0.5, **kwargs):
+        self.beta: float = kwargs.get('beta', beta)
+        self.mu: float = kwargs.get('mu', mu)
+        self.sigma: float = kwargs.get('sigma', sigma)
+        self.proportion: float = kwargs.get('proportion', proportion)
 
     def __repr__(self):
         return self.__str__()
@@ -26,12 +26,12 @@ class Mixture(object):
 
 class GaussianExponentialMixture(Mixture):
 
-    def __init__(self, data: numpy.numarray, max_iterations=100, convergence_tolerance=0.001):
+    def __init__(self, data: numpy.numarray, max_iterations=100, convergence_tolerance=0.001, **kwargs):
 
         self.convergence_tolerance = convergence_tolerance
         self.data: numpy.numarray = data
-        self.parameters: Parameters = Parameters()
-        self.parameters_updated: Parameters = Parameters()
+        self.parameters: Parameters = Parameters(**kwargs)
+        self.parameters_updated: Parameters = Parameters(**kwargs)
         self.expon = stats.expon(scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
         self.max_iterations = max_iterations
