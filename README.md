@@ -33,8 +33,10 @@ pip install .
 import numpy
 from exponential_gaussian_mixture import GaussianExponentialMixture
 
-exponential_data = numpy.random.exponential(scale=1, size=500)
-gaussian_data = numpy.random.normal(loc=10, scale=1, size=500)
+beta, mu, sigma = 1, 10, 1
+
+exponential_data = numpy.random.exponential(scale=beta, size=500)
+gaussian_data = numpy.random.normal(loc=mu, scale=sigma, size=500)
 mixed_data = numpy.append(exponential_data, gaussian_data)
 mix = GaussianExponentialMixture(mixed_data)
 mix.fit()
