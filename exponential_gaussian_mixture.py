@@ -11,15 +11,18 @@ class Parameters(object):
         self.sigma: float = kwargs.get('sigma', sigma)
         self.proportion: float = kwargs.get('proportion', proportion)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'beta: {self.beta:.5f} | mu: {self.mu:.5f} | ' \
                f'sigma: {self.sigma:.5f} | proportion: {self.proportion:.5f}'
 
-    def as_list(self):
+    def as_list(self) -> list:
         return [self.beta, self.mu, self.sigma, self.proportion]
+
+    def max_parameter_difference(self, other) -> float:
+        return max([abs(i[0] - i[1]) for i in zip(self.as_list(), other.as_list())])
 
 
 class GaussianExponentialMixture(object):
@@ -85,9 +88,7 @@ class GaussianExponentialMixture(object):
         self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
 
     def _check_parameter_differences(self) -> float:
-        zipped_parameters = zip(self.parameters.as_list(), self.parameters_updated.as_list())
-        largest_parameter_change = max([abs(i[0] - i[1]) for i in zipped_parameters])
-        return largest_parameter_change
+        return self.parameters.max_parameter_difference(self.parameters_updated)
 
     def _em_step(self) -> None:
         self._sync_parameters()
