@@ -1,4 +1,4 @@
-# Exponential Gaussian Mixture
+# Gaussian-Exponential Mixture
 
 ## Introduction
 
