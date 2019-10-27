@@ -32,11 +32,13 @@ pip install .
 ```python
 import numpy
 from exponential_gaussian_mixture import GaussianExponentialMixture
+
 exponential_data = numpy.random.exponential(scale=1, size=500)
 gaussian_data = numpy.random.normal(loc=10, scale=1, size=500)
 mixed_data = numpy.append(exponential_data, gaussian_data)
 mix = GaussianExponentialMixture(mixed_data)
 mix.fit()
+
 print(mix.parameters)
 ```
 
