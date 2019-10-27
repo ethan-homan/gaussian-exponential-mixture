@@ -6,7 +6,7 @@ Like then name suggests, this package can be used to quickly fit a mixture of an
 exponential distribution and a gaussian distribution to some data. This works with
 numpy arrays, so you can easily add this to a Jupyter notebook style analysis.
 
-## Uses
+## Motivation
 
 This is a pattern that I have seen in data where there are boundaries to data
 and a clear edge distribution forms on the practical lower bound of the global
