@@ -104,3 +104,7 @@ class GaussianExponentialMixture(object):
         while iters < self.max_iterations and self._check_parameter_differences() > self.convergence_tolerance:
             self._em_step()
             iters += 1
+        self._sync_parameters()
+
+    def pdf(self, x):
+        return (1 - self.parameters.proportion) * self.expon.pdf(x) + self.parameters.proportion * self.norm.pdf(x)

@@ -31,7 +31,7 @@ pip install .
 ## Usage
 ```python
 import numpy
-from exponential_gaussian_mixture import GaussianExponentialMixture
+from gaussian_exponential_mixture import GaussianExponentialMixture
 
 beta, mu, sigma = 1, 10, 1
 
@@ -47,3 +47,14 @@ print(mix.parameters)
 ```
 beta: 1.02511 | mu: 9.97145 | sigma: 1.04869 | proportion: 0.50000
 ```
+
+To see the results next to the data you can plot the fit distribution.
+
+```python
+from matplotlib import pyplot as plt
+x = numpy.arange(20, step=0.2)
+plt.plot(x, mix.pdf(x))
+plt.hist(mixed_data, density=True, bins=50)
+plt.show()
+```
+![resulting_plot](./readme_fig.png)
