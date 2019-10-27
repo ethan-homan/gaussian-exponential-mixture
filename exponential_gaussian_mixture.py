@@ -46,7 +46,7 @@ class GaussianExponentialMixture(object):
     def _apply_and_sum_over_data(self, func) -> float:
         return sum(numpy.vectorize(func)(self.data))
 
-    def _evaluate_pi(self, val: float) -> float:
+    def _expectation_is_gaussian(self, val: float) -> float:
         gaussian_density = self.norm.pdf(val)
         exponential_density = self.expon.pdf(val)
         if exponential_density == numpy.nan:
@@ -61,18 +61,18 @@ class GaussianExponentialMixture(object):
 
     def _update_beta(self) -> None:
         self.parameters_updated.beta = \
-            self._apply_and_sum_over_data(lambda x: (1 - self._evaluate_pi(x)) * x) / \
-            self._apply_and_sum_over_data(lambda x: (1 - self._evaluate_pi(x)))
+            self._apply_and_sum_over_data(lambda x: (1 - self._expectation_is_gaussian(x)) * x) / \
+            self._apply_and_sum_over_data(lambda x: (1 - self._expectation_is_gaussian(x)))
 
     def _update_mu(self) -> None:
         self.parameters_updated.mu = \
-            self._apply_and_sum_over_data(lambda x: self._evaluate_pi(x) * x) / \
-            self._apply_and_sum_over_data(lambda x: self._evaluate_pi(x))
+            self._apply_and_sum_over_data(lambda x: self._expectation_is_gaussian(x) * x) / \
+            self._apply_and_sum_over_data(lambda x: self._expectation_is_gaussian(x))
 
     def _update_sigma(self) -> None:
         sigma_squared = \
-            self._apply_and_sum_over_data(lambda x: (self._evaluate_pi(x)) * (x - self.parameters_updated.mu) ** 2) / \
-            self._apply_and_sum_over_data(lambda x: (self._evaluate_pi(x)))
+            self._apply_and_sum_over_data(lambda x: (self._expectation_is_gaussian(x)) * (x - self.parameters_updated.mu) ** 2) / \
+            self._apply_and_sum_over_data(lambda x: (self._expectation_is_gaussian(x)))
         self.parameters_updated.sigma = math.sqrt(sigma_squared)
 
     def _update_proportion(self) -> None:
