@@ -57,4 +57,4 @@ plt.plot(x, mix.pdf(x))
 plt.hist(mixed_data, density=True, bins=50)
 plt.show()
 ```
-![resulting_plot](./readme_fig.png)
+![image](https://user-images.githubusercontent.com/19494792/67649025-ca927e00-f90d-11e9-8658-068148e893a6.png)
