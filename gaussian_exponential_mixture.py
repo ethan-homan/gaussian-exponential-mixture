@@ -61,6 +61,25 @@ class GaussianExponentialParameters:
 
 class GaussianExponentialMixture:
 
+    """Fits a mixture of a Gaussian and Exponential distribution to data in a Numpy array
+
+    This implementation uses Expectation Maximization -- referred to as EM in these docs --
+    to iteratively converge on solutions for four unknown parameters:
+
+        - mu: the mean of the Gaussian/Normal distribution
+        - sigma: the standard deviation of the Gaussian/Normal distribution
+        - beta: the mean of the Exponential distribution
+        - proportion: the proportion of the data that is gaussian
+
+    TODO: Link to Appendix with derivations of update conditions.
+
+    Args:
+        data (np.numarray): single dimensional array of data to fit distributions to
+        exp_loc (float): location of the exponential distribution
+        max_iterations (int): terminate after this number of EM steps
+        convergence_tolerance (float): terminate if no parameter moves by more than this value
+    """
+
     def __init__(self,
                  data: np.numarray,
                  exp_loc=0.0,
@@ -117,6 +136,10 @@ class GaussianExponentialMixture:
 
     def _update_sigma(self) -> None:
         """Updates the sigma parameter (standard deviation/scale) of the gaussian distribution.
+
+        Note:
+            Updating the standard deviation of the normal distribution requires the updated
+            mean for this iteration to be in updated_parameters for behavior to be defined.
         """
         sigma_squared = \
             self._apply_and_sum(lambda x: (self._expectation_is_gaussian(x)) * (x - self.parameters_updated.mu) ** 2) / \
@@ -127,7 +150,7 @@ class GaussianExponentialMixture:
         """Updates the proportion of the data that is likelier gaussian.
         """
         gaussian_total = self._apply_and_sum(lambda x: np.nan_to_num(self.norm.logpdf(x)) >
-                                                                 np.nan_to_num(self.expon.logpdf(x)))
+                                                       np.nan_to_num(self.expon.logpdf(x)))
         self.parameters_updated.proportion = gaussian_total / len(self.data)
 
     def _sync_parameters(self) -> None:
@@ -150,13 +173,19 @@ class GaussianExponentialMixture:
     def _check_parameter_differences(self) -> float:
         """Compares the newly updated parameters to the previous iteration.
 
-        This returns the largest pairwise difference between parameter values for
-        use in determining the convergence of EM.
+        Returns:
+            This returns the largest pairwise difference between parameter values for
+            use in determining the convergence of EM.
         """
         return self.parameters.max_parameter_difference(self.parameters_updated)
 
-    def _em_step(self) -> None:
+    def em_step(self) -> None:
         """Performs one EM step on the data and stores the result in updated_parameters.
+
+        Note:
+            While This method can be used safely independently, it is advisable to use `self.fit`
+            in almost all cases outside of debugging since it handles a iteration and
+            tracks convergence.
         """
         self._sync_parameters()
         self._update_beta()
@@ -167,6 +196,13 @@ class GaussianExponentialMixture:
 
     def fit(self) -> None:
         """Performs EM steps until convergence criteria are satisfied.
+
+        Note:
+            If your data is large or your convergence criteria is strict this may take
+            a long time.
+
+            To debug, consider running `em_step` directly and monitoring parameter movement
+            and iteration time.
         """
         self._em_step()
         iters = 1
