@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Like then name suggests, this package can be used to quickly fit a mixture of an
+Like the name suggests, this package can be used to quickly fit a mixture of an
 exponential distribution and a gaussian distribution to some data. This works with
 numpy arrays, so you can easily add this to a Jupyter notebook style analysis.
 
