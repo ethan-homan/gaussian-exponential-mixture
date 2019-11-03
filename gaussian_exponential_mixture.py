@@ -204,10 +204,10 @@ class GaussianExponentialMixture:
             To debug, consider running `em_step` directly and monitoring parameter movement
             and iteration time.
         """
-        self._em_step()
+        self.em_step()
         iters = 1
         while iters < self.max_iterations and self._check_parameter_differences() > self.convergence_tolerance:
-            self._em_step()
+            self.em_step()
             iters += 1
         self._sync_parameters()
 
