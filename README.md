@@ -1,5 +1,15 @@
 # Gaussian-Exponential Mixture
 
+## Modification details
+
+This is a forked version of the Gaussion Exponential Mixture Library.  Main changes are:
+
+### Support for a Guassion/Exponential mixture model where the exponential offset parameter is the same at the Gaussion Mu parameter.  
+This forms a simplified model for the Noise output of an EMCCD as detailed on the paper 'High Frame Rate Imaging Based Photometry" by Harpsoe et Al. Some changes to fix the numerical instability
+### Numerical instability
+High values in the distribution cause NaN inthe distribution likeilhoods.  High values are automatically assign to the exponential tail in this instance  
+
+
 ## Introduction
 
 Like the name suggests, this package can be used to quickly fit a mixture of an

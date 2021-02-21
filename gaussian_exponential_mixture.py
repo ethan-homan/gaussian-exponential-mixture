@@ -95,6 +95,7 @@ class GaussianExponentialMixture:
         self.max_iterations: int = max_iterations
         self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
+        np.seterr(divide='raise')
 
     def _apply_and_sum(self, func: callable) -> float:
         """Applies a function to the data and returns the sum of the array.
@@ -118,7 +119,17 @@ class GaussianExponentialMixture:
             return 0
         probability_gaussian = gaussian_density * self.parameters.proportion
         probability_exponential = exponential_density * (1 - self.parameters.proportion)
-        return probability_gaussian / (probability_gaussian + probability_exponential)
+
+        expectation_is_gaussian = probability_gaussian / (probability_gaussian + probability_exponential)
+
+        """If NaN is caused low-probabilities in long tail, assume value part of exponential distriubtion
+        """
+        if math.isnan(expectation_is_gaussian):
+            if val > (self.parameters.mu+(self.parameters.sigma*10)):
+                print("Value more than 10 sigma from Mu, assume part of Exponential")
+                expectation_is_gaussian = 0.0
+
+        return expectation_is_gaussian
 
     def _update_beta(self) -> None:
         """Updates the beta parameter (mean/scale) of the exponential distribution.
@@ -168,7 +179,8 @@ class GaussianExponentialMixture:
         need to be applied on each iteration.
         """
         self.norm = stats.norm(loc=self.parameters_updated.mu, scale=self.parameters_updated.sigma)
-        self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
+        self.expon = stats.expon(loc=self.parameters_updated.mu, scale=self.parameters_updated.beta)
+
 
     def _check_parameter_differences(self) -> float:
         """Compares the newly updated parameters to the previous iteration.
