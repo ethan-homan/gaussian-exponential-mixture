@@ -29,7 +29,7 @@ populations.
 This requires python 3.6 +
 
 ```shell script
-git clone https://github.com/ethanwh/gaussian-exponential-mixture.git
+git clone https://github.com/fatmac78/gaussian-exponential-mixture.git
 cd gaussian-exponential-mixture
 pip install .
 ```
