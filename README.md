@@ -4,8 +4,8 @@
 
 This is a forked version of the Gaussian Exponential Mixture Library written by from Ethan Holman.  Main changes are:
 
-* Support for a Gaussian/Exponential mixture model where the exponential offset parameter is the same at the Gaussion Mu parameter.  This forms a simplified model for the Noise output of an EMCCD as detailed on the paper 'High Frame Rate Imaging Based Photometry" by Harpsoe et Al. Some changes to fix the numerical instability
-* Fixing some Numerical instability.  High values in the distribution cause NaN inthe distribution likeilhoods.  High values are automatically assign to the exponential tail in this instance  
+* Support for a Gaussian/Exponential mixture model where the exponential offset parameter is the same at the Gaussion Mu parameter.  This forms a simplified model for the Noise output of an EMCCD as detailed on the paper 'High Frame Rate Imaging Based Photometry" by Harpsoe et Al. 
+* Fixing some Numerical instability.  High values in the distribution cause NaN in the distribution likelihoods.  High values are automatically assigned to the exponential distribution is they are 10 sigma from estimated Mu  
 
 ## Introduction
 
