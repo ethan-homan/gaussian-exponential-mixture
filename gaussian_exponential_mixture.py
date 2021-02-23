@@ -100,7 +100,6 @@ class GaussianExponentialMixture:
             self._exp_loc: float = self.parameters.mu
         self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
-        np.seterr(divide='raise')
 
     def _apply_and_sum(self, func: callable) -> float:
         """Applies a function to the data and returns the sum of the array.
