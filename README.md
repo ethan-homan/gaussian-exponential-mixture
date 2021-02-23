@@ -1,12 +1,5 @@
 # Gaussian-Exponential Mixture
 
-## Modification details
-
-This is a forked version of the Gaussian Exponential Mixture Library written by from Ethan Holman.  Main changes are:
-
-* Support for a Gaussian/Exponential mixture model where the exponential offset parameter is the same at the Gaussion Mu parameter.  This forms a simplified model for the Noise output of an EMCCD as detailed on the paper 'High Frame Rate Imaging Based Photometry" by Harpsoe et Al. 
-* Fixing some Numerical instability.  High values in the distribution cause NaN in the distribution likelihoods.  High values are automatically assigned to the exponential distribution is they are 10 sigma from estimated Mu  
-
 ## Introduction
 
 Like the name suggests, this package can be used to quickly fit a mixture of an
@@ -29,7 +22,7 @@ populations.
 This requires python 3.6 +
 
 ```shell script
-git clone https://github.com/fatmac78/gaussian-exponential-mixture.git
+git clone https://github.com/ethanwh/gaussian-exponential-mixture.git
 cd gaussian-exponential-mixture
 pip install .
 ```
