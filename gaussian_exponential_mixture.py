@@ -108,6 +108,9 @@ class GaussianExponentialMixture:
         return np.sum(np.vectorize(func)(self.data))
 
     def _expectation_is_gaussian(self, val: float) -> float:
+        """Computes (prob_gaussian)/(prob_gaussian + prob_exponential) for the value passed
+           with some protection against underflow.
+        """
         gaussian_density = self.norm.logpdf(val)
         exponential_density = self.expon.logpdf(val)
         log_prob_gaussian = gaussian_density + np.log(self.parameters.proportion)
