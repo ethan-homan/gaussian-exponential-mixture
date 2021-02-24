@@ -105,20 +105,23 @@ class GaussianExponentialMixture:
         Returns:
             The sum of the data vector after applying func.
         """
-        return sum(np.vectorize(func)(self.data))
+        return np.sum(np.vectorize(func)(self.data))
 
     def _expectation_is_gaussian(self, val: float) -> float:
-        gaussian_density = self.norm.pdf(val)
-        exponential_density = self.expon.pdf(val)
-        if exponential_density == np.nan:
-            return 1
-        if gaussian_density == np.nan:
+        """Computes (prob_gaussian)/(prob_gaussian + prob_exponential) for the value passed
+           with some protection against underflow.
+        """
+        gaussian_density = self.norm.logpdf(val)
+        exponential_density = self.expon.logpdf(val)
+        log_prob_gaussian = gaussian_density + np.log(self.parameters.proportion)
+        log_prob_exponential = exponential_density + np.log(1 - self.parameters.proportion)
+        expectation_is_gaussian = np.exp(
+                log_prob_gaussian - np.logaddexp(log_prob_gaussian, log_prob_exponential)
+        )
+        if expectation_is_gaussian == np.nan:
             return 0
-        if self.parameters.proportion == 0:
-            return 0
-        probability_gaussian = gaussian_density * self.parameters.proportion
-        probability_exponential = exponential_density * (1 - self.parameters.proportion)
-        return probability_gaussian / (probability_gaussian + probability_exponential)
+        else:
+            return expectation_is_gaussian
 
     def _update_beta(self) -> None:
         """Updates the beta parameter (mean/scale) of the exponential distribution.
@@ -211,7 +214,15 @@ class GaussianExponentialMixture:
             iters += 1
         self._sync_parameters()
 
+    def logpdf(self, val):
+        """Evaluates the density of the logpdf of the GaussianExponentialMixture.
+        """
+        weighted_log_gaussian_density = np.log(self.parameters.proportion) + self.norm.logpdf(val)
+        weighted_log_exponential_density = np.log((1 - self.parameters.proportion)) + self.expon.logpdf(val)
+        log_density = np.logaddexp(weighted_log_gaussian_density, weighted_log_exponential_density)
+        return log_density
+
     def pdf(self, val):
         """Evaluates the density of the pdf of the GaussianExponentialMixture.
         """
-        return (1 - self.parameters.proportion) * self.expon.pdf(val) + self.parameters.proportion * self.norm.pdf(val)
+        return np.exp(self.logpdf(val))
