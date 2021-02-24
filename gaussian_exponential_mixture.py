@@ -96,8 +96,6 @@ class GaussianExponentialMixture:
         self.parameters_updated = GaussianExponentialParameters(**kwargs)
         self.max_iterations: int = max_iterations
         self.distribution_fix: bool = distribution_fix
-        if distribution_fix is True:
-            self._exp_loc: float = self.parameters.mu
         self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
 
