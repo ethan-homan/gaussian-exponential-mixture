@@ -78,6 +78,7 @@ class GaussianExponentialMixture:
         exp_loc (float): location of the exponential distribution
         max_iterations (int): terminate after this number of EM steps
         convergence_tolerance (float): terminate if no parameter moves by more than this value
+        distribution_fix (bool): support use case where gaussian mu and exponential offset are locked
     """
 
     def __init__(self,
@@ -85,6 +86,7 @@ class GaussianExponentialMixture:
                  exp_loc=0.0,
                  max_iterations=100,
                  convergence_tolerance=0.001,
+                 distribution_fix=False,
                  **kwargs):
 
         self.convergence_tolerance: float = convergence_tolerance
@@ -93,6 +95,7 @@ class GaussianExponentialMixture:
         self.parameters = GaussianExponentialParameters(**kwargs)
         self.parameters_updated = GaussianExponentialParameters(**kwargs)
         self.max_iterations: int = max_iterations
+        self.distribution_fix: bool = distribution_fix
         self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
 
@@ -171,7 +174,11 @@ class GaussianExponentialMixture:
         need to be applied on each iteration.
         """
         self.norm = stats.norm(loc=self.parameters_updated.mu, scale=self.parameters_updated.sigma)
-        self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
+        if self.distribution_fix is False:
+            self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
+        else:
+            self.expon = stats.expon(loc=self.parameters_updated.mu, scale=self.parameters_updated.beta)
+
 
     def _check_parameter_differences(self) -> float:
         """Compares the newly updated parameters to the previous iteration.
