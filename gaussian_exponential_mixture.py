@@ -23,7 +23,7 @@ class GaussianExponentialParameters:
         exl_loc (float): the location of the start of the exponential distribution.
     """
 
-    def __init__(self, beta=1.0, mu=0.0, sigma=100.0, proportion=0.5, exp_loc=0, **kwargs):
+    def __init__(self, beta=1.0, mu=0.0, sigma=100.0, proportion=0.5, exp_loc=0.0, **kwargs):
         self.beta: float = kwargs.get('beta', beta)
         self.mu: float = kwargs.get('mu', mu)
         self.sigma: float = kwargs.get('sigma', sigma)
@@ -35,8 +35,8 @@ class GaussianExponentialParameters:
 
     def __str__(self) -> str:
         return f'beta: {self.beta:.5f} | mu: {self.mu:.5f} | ' \
-               f'sigma: {self.sigma:.5f} | exp_loc: {self.exp_loc:.5f} \
-                | proportion: {self.proportion:.5f}'
+               f'sigma: {self.sigma:.5f} | exp_loc: {self.exp_loc:.5f} | ' \
+               f'proportion: {self.proportion:.5f}'
 
     def as_list(self) -> list:
         """Gets the parameters as a list.
@@ -145,11 +145,13 @@ class GaussianExponentialMixture:
         """Updates the location parameter of the exponential distribution.
 
          Note:
-            Assumes this parameter is fixed unless it track the Gausian Mu.  There might be a update
-            equation for the normal case that could be added in future
+            Assumes this parameter is fixed unless it tracked the Gaussian Mu.  
+            
+            TODO: Derive an update equation for the location than could be implemented
+            for this to be a free parameter to esitimate
         """
         if self.distribution_fix is True:
-           self.parameters_updated.exp_loc = self.parameters_updated.mu #+ (2*self.parameters_updated.sigma)
+           self.parameters_updated.exp_loc = self.parameters_updated.mu
            
     def _update_sigma(self) -> None:
         """Updates the sigma parameter (standard deviation/scale) of the gaussian distribution.
@@ -185,9 +187,6 @@ class GaussianExponentialMixture:
         need to be applied on each iteration.
         """
         self.norm = stats.norm(loc=self.parameters_updated.mu, scale=self.parameters_updated.sigma)
-    #    if self.distribution_fix is False:
-    #        self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
-    #    else:
         self.expon = stats.expon(loc=self.parameters_updated.exp_loc, scale=self.parameters_updated.beta)
 
 
