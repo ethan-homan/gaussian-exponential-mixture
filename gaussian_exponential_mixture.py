@@ -78,6 +78,7 @@ class GaussianExponentialMixture:
         exp_loc (float): location of the exponential distribution
         max_iterations (int): terminate after this number of EM steps
         convergence_tolerance (float): terminate if no parameter moves by more than this value
+        distribution_fix (bool): support use case where gaussian mu and exponential offset are locked
     """
 
     def __init__(self,
@@ -85,6 +86,7 @@ class GaussianExponentialMixture:
                  exp_loc=0.0,
                  max_iterations=100,
                  convergence_tolerance=0.001,
+                 distribution_fix=False,
                  **kwargs):
 
         self.convergence_tolerance: float = convergence_tolerance
@@ -93,9 +95,9 @@ class GaussianExponentialMixture:
         self.parameters = GaussianExponentialParameters(**kwargs)
         self.parameters_updated = GaussianExponentialParameters(**kwargs)
         self.max_iterations: int = max_iterations
+        self.distribution_fix: bool = distribution_fix
         self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
-        np.seterr(divide='raise')
 
     def _apply_and_sum(self, func: callable) -> float:
         """Applies a function to the data and returns the sum of the array.
@@ -106,30 +108,23 @@ class GaussianExponentialMixture:
         Returns:
             The sum of the data vector after applying func.
         """
-        return sum(np.vectorize(func)(self.data))
+        return np.sum(np.vectorize(func)(self.data))
 
     def _expectation_is_gaussian(self, val: float) -> float:
-        gaussian_density = self.norm.pdf(val)
-        exponential_density = self.expon.pdf(val)
-        if exponential_density == np.nan:
-            return 1
-        if gaussian_density == np.nan:
-            return 0
-        if self.parameters.proportion == 0:
-            return 0
-        probability_gaussian = gaussian_density * self.parameters.proportion
-        probability_exponential = exponential_density * (1 - self.parameters.proportion)
-
-        expectation_is_gaussian = probability_gaussian / (probability_gaussian + probability_exponential)
-
-        """If NaN is caused low-probabilities in long tail, assume value part of exponential distriubtion
+        """Computes (prob_gaussian)/(prob_gaussian + prob_exponential) for the value passed
+           with some protection against underflow.
         """
-        if math.isnan(expectation_is_gaussian):
-            if val > (self.parameters.mu+(self.parameters.sigma*10)):
-                print("Value more than 10 sigma from Mu, assume part of Exponential")
-                expectation_is_gaussian = 0.0
-
-        return expectation_is_gaussian
+        gaussian_density = self.norm.logpdf(val)
+        exponential_density = self.expon.logpdf(val)
+        log_prob_gaussian = gaussian_density + np.log(self.parameters.proportion)
+        log_prob_exponential = exponential_density + np.log(1 - self.parameters.proportion)
+        expectation_is_gaussian = np.exp(
+                log_prob_gaussian - np.logaddexp(log_prob_gaussian, log_prob_exponential)
+        )
+        if expectation_is_gaussian == np.nan:
+            return 0
+        else:
+            return expectation_is_gaussian
 
     def _update_beta(self) -> None:
         """Updates the beta parameter (mean/scale) of the exponential distribution.
@@ -179,7 +174,10 @@ class GaussianExponentialMixture:
         need to be applied on each iteration.
         """
         self.norm = stats.norm(loc=self.parameters_updated.mu, scale=self.parameters_updated.sigma)
-        self.expon = stats.expon(loc=self.parameters_updated.mu, scale=self.parameters_updated.beta)
+        if self.distribution_fix is False:
+            self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
+        else:
+            self.expon = stats.expon(loc=self.parameters_updated.mu, scale=self.parameters_updated.beta)
 
 
     def _check_parameter_differences(self) -> float:
@@ -223,7 +221,15 @@ class GaussianExponentialMixture:
             iters += 1
         self._sync_parameters()
 
+    def logpdf(self, val):
+        """Evaluates the density of the logpdf of the GaussianExponentialMixture.
+        """
+        weighted_log_gaussian_density = np.log(self.parameters.proportion) + self.norm.logpdf(val)
+        weighted_log_exponential_density = np.log((1 - self.parameters.proportion)) + self.expon.logpdf(val)
+        log_density = np.logaddexp(weighted_log_gaussian_density, weighted_log_exponential_density)
+        return log_density
+
     def pdf(self, val):
         """Evaluates the density of the pdf of the GaussianExponentialMixture.
         """
-        return (1 - self.parameters.proportion) * self.expon.pdf(val) + self.parameters.proportion * self.norm.pdf(val)
+        return np.exp(self.logpdf(val))
