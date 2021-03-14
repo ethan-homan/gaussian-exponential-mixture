@@ -20,20 +20,23 @@ class GaussianExponentialParameters:
             of the gaussian distribution.
         proportion (float): the proportion of the data that is likelier
             to be gaussian.
+        exl_loc (float): the location of the start of the exponential distribution.
     """
 
-    def __init__(self, beta=1.0, mu=0.0, sigma=100.0, proportion=0.5, **kwargs):
+    def __init__(self, beta=1.0, mu=0.0, sigma=100.0, proportion=0.5, exp_loc=0, **kwargs):
         self.beta: float = kwargs.get('beta', beta)
         self.mu: float = kwargs.get('mu', mu)
         self.sigma: float = kwargs.get('sigma', sigma)
         self.proportion: float = kwargs.get('proportion', proportion)
+        self.exp_loc: float = kwargs.get('exp_loc', exp_loc)
 
     def __repr__(self) -> str:
         return self.__str__()
 
     def __str__(self) -> str:
         return f'beta: {self.beta:.5f} | mu: {self.mu:.5f} | ' \
-               f'sigma: {self.sigma:.5f} | proportion: {self.proportion:.5f}'
+               f'sigma: {self.sigma:.5f} | exp_loc: {self.exp_loc:.5f} \
+                | proportion: {self.proportion:.5f}'
 
     def as_list(self) -> list:
         """Gets the parameters as a list.
@@ -41,7 +44,7 @@ class GaussianExponentialParameters:
         Returns:
             beta, mu, sigma, and proportion as a list
         """
-        return [self.beta, self.mu, self.sigma, self.proportion]
+        return [self.beta, self.mu, self.sigma, self.proportion, self.exp_loc]
 
     def max_parameter_difference(self, other) -> float:
         """Get the largest difference in parameters to another GaussianExponentialParameters.
@@ -83,7 +86,6 @@ class GaussianExponentialMixture:
 
     def __init__(self,
                  data: np.numarray,
-                 exp_loc=0.0,
                  max_iterations=100,
                  convergence_tolerance=0.001,
                  distribution_fix=False,
@@ -91,12 +93,11 @@ class GaussianExponentialMixture:
 
         self.convergence_tolerance: float = convergence_tolerance
         self.data: np.numarray = data
-        self._exp_loc: float = exp_loc
-        self.parameters = GaussianExponentialParameters(**kwargs)
-        self.parameters_updated = GaussianExponentialParameters(**kwargs)
+        self.parameters = GaussianExponentialParameters( **kwargs)
+        self.parameters_updated = GaussianExponentialParameters( **kwargs)
         self.max_iterations: int = max_iterations
         self.distribution_fix: bool = distribution_fix
-        self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters.beta)
+        self.expon = stats.expon(loc=self.parameters.exp_loc, scale=self.parameters.beta)
         self.norm = stats.norm(loc=self.parameters.mu, scale=self.parameters.sigma)
 
     def _apply_and_sum(self, func: callable) -> float:
@@ -130,7 +131,7 @@ class GaussianExponentialMixture:
         """Updates the beta parameter (mean/scale) of the exponential distribution.
         """
         self.parameters_updated.beta = \
-            self._apply_and_sum(lambda x: (1 - self._expectation_is_gaussian(x)) * x) / \
+            self._apply_and_sum(lambda x: (1 - self._expectation_is_gaussian(x)) * (x-self.parameters_updated.exp_loc)) / \
             self._apply_and_sum(lambda x: (1 - self._expectation_is_gaussian(x)))
 
     def _update_mu(self) -> None:
@@ -140,6 +141,16 @@ class GaussianExponentialMixture:
             self._apply_and_sum(lambda x: self._expectation_is_gaussian(x) * x) / \
             self._apply_and_sum(lambda x: self._expectation_is_gaussian(x))
 
+    def _update_exp_loc(self) -> None:
+        """Updates the location parameter of the exponential distribution.
+
+         Note:
+            Assumes this parameter is fixed unless it track the Gausian Mu.  There might be a update
+            equation for the normal case that could be added in future
+        """
+        if self.distribution_fix is True:
+           self.parameters_updated.exp_loc = self.parameters_updated.mu #+ (2*self.parameters_updated.sigma)
+           
     def _update_sigma(self) -> None:
         """Updates the sigma parameter (standard deviation/scale) of the gaussian distribution.
 
@@ -174,10 +185,10 @@ class GaussianExponentialMixture:
         need to be applied on each iteration.
         """
         self.norm = stats.norm(loc=self.parameters_updated.mu, scale=self.parameters_updated.sigma)
-        if self.distribution_fix is False:
-            self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
-        else:
-            self.expon = stats.expon(loc=self.parameters_updated.mu, scale=self.parameters_updated.beta)
+    #    if self.distribution_fix is False:
+    #        self.expon = stats.expon(loc=self._exp_loc, scale=self.parameters_updated.beta)
+    #    else:
+        self.expon = stats.expon(loc=self.parameters_updated.exp_loc, scale=self.parameters_updated.beta)
 
 
     def _check_parameter_differences(self) -> float:
@@ -200,6 +211,7 @@ class GaussianExponentialMixture:
         self._sync_parameters()
         self._update_beta()
         self._update_mu()
+        self._update_exp_loc()
         self._update_sigma()
         self._update_pdfs()
         self._update_proportion()
